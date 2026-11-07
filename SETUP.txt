@@ -4,9 +4,9 @@ Hosting: https://jishnujk.github.io/boi-rewards-tracker/
 Backend: Supabase project nukwykfpofqkzkydqzna (Mumbai, Free organization).
 
 Sign in with the same email on each device. Open each email link in the same
-browser/device that requested it (PKCE). Sign-in sessions and unsent drafts are
-kept in session storage: keep the tab open until it reports Synced, or export a
-backup before closing. Reopening a closed tab may require another email link.
+browser/device that requested it (PKCE). Sign-in sessions persist in this browser
+until sign-out. Unsent drafts are isolated in each tab's session storage: keep
+the tab open until it reports Synced, or export a backup before closing it.
 
 Existing localStorage data is never automatically uploaded. After signing in,
 use Review and upload browser data. The app downloads a backup and requests

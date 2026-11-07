@@ -106,7 +106,13 @@
   const cfg=window.BOI_CONFIG;
   if(!cfg?.url||!cfg.publishableKey||!window.supabase){$('signIn').hidden=true;status('Local mode. Cloud setup is not configured yet. Export backups regularly.');return;}
   try{
-    client=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{flowType:'pkce',storage:sessionStorage,storageKey:'boi-auth-v2',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+    // PKCE email links commonly open a new tab: the verifier must be available
+    // throughout this browser. Unsent financial drafts remain isolated per tab.
+    for(const k of ['boi-auth-v2','boi-auth-v2-code-verifier']){
+      if(!localStorage.getItem(k)&&sessionStorage.getItem(k))localStorage.setItem(k,sessionStorage.getItem(k));
+      sessionStorage.removeItem(k);
+    }
+    client=window.supabase.createClient(cfg.url,cfg.publishableKey,{auth:{flowType:'pkce',storage:localStorage,storageKey:'boi-auth-v2',persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
     client.auth.onAuthStateChange((_event,session)=>{setTimeout(()=>void sessionChanged(session),0);});
     client.auth.getSession().then(({data,error})=>{if(error){status('The sign-in link expired or was opened in another browser. Request a new link here.');return;}void sessionChanged(data.session);});
     setInterval(()=>{if(document.visibilityState==='visible')void sync();},15000);
