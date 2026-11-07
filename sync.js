@@ -98,13 +98,19 @@
   $('signIn').onsubmit=async e=>{
     e.preventDefault();if(!client)return;
     const button=$('signIn').querySelector('button');button.disabled=true;
-    try{const {error}=await client.auth.signInWithOtp({email:$('email').value.trim(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;status('Check your email. Open the sign-in link in this same browser on this device. No browser transactions have been uploaded.');}catch{showError();}finally{button.disabled=false;}
+    try{const {error}=await client.auth.signInWithOtp({email:$('email').value.trim(),options:{emailRedirectTo:location.origin+location.pathname}});if(error)throw error;status('Check your email. Open only the newest sign-in link once, in this same browser. No browser transactions have been uploaded.');}catch(error){
+      if(error.status===429||['over_email_send_rate_limit','over_request_rate_limit','email_rate_limit_exceeded'].includes(error.code))status('Supabase email rate limit reached. Wait for the sending quota to reset before requesting another link. Repeated attempts cannot send another email.');
+      else if(error.code==='email_address_not_authorized')status('This email is not authorized by Supabase’s default mail service. Use your Supabase organization email or configure custom SMTP.');
+      else status('Unable to send sign-in email: '+(error.message||'Check the network and Supabase email settings.'));
+    }finally{button.disabled=false;}
   };
   window.addEventListener('online',()=>void sync());
   window.addEventListener('focus',()=>void sync());
   window.addEventListener('beforeunload',e=>{if(draft?.dirty){e.preventDefault();e.returnValue='';}});
   const cfg=window.BOI_CONFIG;
   if(!cfg?.url||!cfg.publishableKey||!window.supabase){$('signIn').hidden=true;status('Local mode. Cloud setup is not configured yet. Export backups regularly.');return;}
+  const loginError=new URLSearchParams(location.search||'').get('error_code')||new URLSearchParams((location.hash||'').slice(1)).get('error_code');
+  if(loginError==='otp_expired')status('This email link expired or was already used. Request a fresh link after any email sending limit resets.');
   try{
     // PKCE email links commonly open a new tab: the verifier must be available
     // throughout this browser. Unsent financial drafts remain isolated per tab.
