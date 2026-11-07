@@ -1,0 +1,51 @@
+BOI Rewards Tracker — private synchronization
+
+Hosting: https://jishnujk.github.io/boi-rewards-tracker/
+Backend: Supabase project nukwykfpofqkzkydqzna (Mumbai, Free organization).
+
+Sign in with the same email on each device. Open each email link in the same
+browser/device that requested it (PKCE). Sign-in sessions and unsent drafts are
+kept in session storage: keep the tab open until it reports Synced, or export a
+backup before closing. Reopening a closed tab may require another email link.
+
+Existing localStorage data is never automatically uploaded. After signing in,
+use Review and upload browser data. The app downloads a backup and requests
+explicit confirmation identifying the account and transaction count. Original
+browser data remains untouched. Conflicting IDs or credited rewards stop migration.
+
+Transactions, assumptions, and actual credited points are synchronized together
+in one account document, protected by owner-only SELECT RLS. Direct client writes
+are revoked. The authenticated save_rewards function derives the owner from
+auth.uid() and atomically checks the expected revision before saving. Newer cloud
+revisions pause upload and retain unsent changes for export and manual recovery.
+There is no automatic last-writer overwrite or record deletion endpoint.
+
+Refresh is automatic every 15 seconds while visible, on focus, and on reconnection.
+Sync now retries immediately. Finish or cancel a transaction edit before loading
+new cloud data. Export backup creates a local JSON file without credentials.
+Import validates data before confirmation and affects the currently selected
+local/account view. If signed in, an imported replacement updates the cloud after
+the same revision check. Backups contain financial information; keep them private.
+
+Database setup: schema.sql was applied once in Supabase SQL Editor. Do not rerun
+it against an existing deployment. verify-security.sql runs isolated synthetic
+checks and rolls back all test users/rows. It must finish with the PASS result.
+
+Authentication settings:
+- Email provider enabled, email confirmation retained.
+- Site URL and exact redirect URL: https://jishnujk.github.io/boi-rewards-tracker/
+- No wildcard redirects, anonymous auth, or public table grants required.
+- Supabase default SMTP limits recipients to project organization members and
+  applies rate limits. For other addresses, configure a custom SMTP provider in
+  the dashboard. Never put SMTP credentials in this repository.
+
+config.js contains only a public project URL and publishable key. Never commit
+a database password, secret key, service_role key, authentication token, backup,
+or personal transaction record. The old hardcoded ledger has been removed from
+the current app; earlier Git history has not been rewritten.
+
+The original reward formulas, thresholds, cap, rounding, and assumptions remain
+unchanged. Existing estimates are observations, not bank guarantees.
+
+Supabase browser library: @supabase/supabase-js 2.119.0, vendored from its npm
+distribution through jsDelivr. See SUPABASE-LICENSE.txt.
